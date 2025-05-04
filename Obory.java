@@ -60,8 +60,8 @@ class TelecomStudent extends Student {
         morseCodeMap.put(' ', "/");
     }
 
-    public TelecomStudent(int id, String firstName, String lastName, int birthYear) {
-        super(id, firstName, lastName, birthYear);
+    public TelecomStudent(int id, String type, String firstName, String lastName, int birthYear) {
+        super(id, type,  firstName, lastName, birthYear);
     }
 
     @Override
@@ -82,8 +82,8 @@ class TelecomStudent extends Student {
 }
 
 class CyberSecurityStudent extends Student {
-    public CyberSecurityStudent(int id, String firstName, String lastName, int birthYear) {
-        super(id, firstName, lastName, birthYear);
+    public CyberSecurityStudent(int id, String type, String firstName, String lastName, int birthYear) {
+        super(id, type, firstName, lastName, birthYear);
     }
 
     @Override

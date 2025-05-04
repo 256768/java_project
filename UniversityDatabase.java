@@ -5,20 +5,20 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class UniversityDatabase {
-    private static List<Student> students;
-    private int nextId;
+    protected static List<Student> students;
+    private static int nextId;
 
     public UniversityDatabase() {
         students = new ArrayList<>();
         nextId = 1; 
     }
 
-    public void addStudent(String type, String firstName, String lastName, int birthYear) {
+    public void addStudent( int id, String type,  String firstName, String lastName, int birthYear) {
         Student student;
         if (type.equals("telecom")) {
-            student = new TelecomStudent(nextId++, firstName, lastName, birthYear);
+            student = new TelecomStudent(id, type,  firstName, lastName, birthYear);
         } else {
-            student = new CyberSecurityStudent(nextId++, firstName, lastName, birthYear);
+            student = new CyberSecurityStudent(id, type, firstName, lastName, birthYear);
         }
         students.add(student);
     }
@@ -82,52 +82,60 @@ public class UniversityDatabase {
    
     
     public void saveToDatabase() {
-    	Connection conn = DBConnection.getDBConnection();
-    	InsertQueries i = new InsertQueries();
+    	  Connection conn = DBConnection.getDBConnection();
+    	    InsertQueries insertQueries = new InsertQueries();
 
-    	for (Student student : students) {
-    	    String name = student.getFirstName();
-    	    String surname = student.getLastName();
-    	    int birthYear = student.getBirthYear(); 
-    	    double average = student.getAverage();
-    	    
-    	    String query = "INSERT INTO user (name, surname, age, average) " +
-    	                   "VALUES('" + name + "', '" + surname + "', " + birthYear + ", " + average + ")";
-    	    
-    	    i.performInsertQuery(query);
-    	}
+    	    for (Student student : students) {
+    	        String firstName = student.getFirstName();
+    	        String lastName = student.getLastName();
+    	        int birthYear = student.getBirthYear();
+    	        String type = (student instanceof TelecomStudent) ? "telecom" : "cyber"; 
+    	        double average = student.getAverage();
+
+
+    	        insertQueries.insertNewUser(firstName, lastName, birthYear, type, (int) average); 
+    	    }
     }
      
     public void loadFromDatabase() {
         Connection conn = DBConnection.getDBConnection();
-        String query = "SELECT id, major, name, surname, birthYear FROM user";
+        String query = "SELECT id, type, firstname, lastname, birthyear, average FROM user";
 
         try (PreparedStatement prStmt = conn.prepareStatement(query);
              ResultSet rs = prStmt.executeQuery()) {
-            
+
             while (rs.next()) {
                 int id = rs.getInt("id");
-                String major = rs.getString("major");
-                String name = rs.getString("name");
-                String surname = rs.getString("surname");
-                int birthYear = rs.getInt("birthYear");
+                String type = rs.getString("type");
+                String firstName = rs.getString("firstname");
+                String lastName = rs.getString("lastname");
+                int birthYear = rs.getInt("birthyear");
+                double average = rs.getDouble("average");
 
-                addStudent(major, name, surname, birthYear);
+                addStudent(id, type, firstName, lastName, birthYear);
+
+                Student s = findStudentById(id);
+                if (s != null) {
+                    s.setAverage(average);
+                }
             }
-            System.out.println("All students have been loaded from the database.");
+
+            System.out.println("All students were loaded from the database.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
 
+
     public static void main(String[] args) {
         UniversityDatabase db = new UniversityDatabase();
         Scanner scanner = new Scanner(System.in);
+        DBConnection.setupUserTable();
         String command;
 
         while (true) {
-            System.out.println("Input command (add, grade, remove, find, list, skill, average, count, save, load, exit):");
+            System.out.println("Input command (add, grade, remove, find, list, skill, average, count, save, load from file, load from database, exit):");
             command = scanner.nextLine();
 
             switch (command) {
@@ -140,7 +148,7 @@ public class UniversityDatabase {
                     String lastName = scanner.nextLine();
                     System.out.println("Input birth year:");
                     int birthYear = Integer.parseInt(scanner.nextLine());
-                    db.addStudent(type, firstName, lastName, birthYear);
+                    db.addStudent(nextId++, type, firstName, lastName, birthYear);
                     break;
 
                 case "grade":
@@ -218,21 +226,25 @@ public class UniversityDatabase {
                     System.out.println("Input students ID to save to file:");
                     int saveIdSave = Integer.parseInt(scanner.nextLine());
                     File.saveStudentToFile(saveFilename, saveIdSave);
+                    db.saveToDatabase();
+                    System.out.println("Saved to database and file.");
                     break;
 
-                case "load":
+                case "load from file":
                     System.out.println("Input file name to load student from file: ");
                     String loadFilename = scanner.nextLine();
                     System.out.println("Input students ID to save to file:");
                     int saveIdLoad = Integer.parseInt(scanner.nextLine());
                     File.loadStudentFromFile(loadFilename, saveIdLoad );
                     break;
+                    
+                case "load from database":
+                    db.loadFromDatabase();
+                    break;
 
                 case "exit":
-                    // db.saveToDatabase();
-                    System.out.println("Saved to database and exiting.");
                     scanner.close();
-                    // DBConnection.closeConnection();
+                    DBConnection.closeConnection();
                     return;
 
                 default:

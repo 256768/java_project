@@ -7,9 +7,12 @@ abstract class Student {
     protected String lastName;
     protected int birthYear;
     protected List<Integer> grades;
+    protected String type;
+    protected double storedAverage = 0; 
 
-    public Student(int id, String firstName, String lastName, int birthYear) {
+    public Student(int id, String type, String firstName, String lastName, int birthYear) {
         this.id = id;
+        this.type = type;
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthYear = birthYear;
@@ -36,13 +39,24 @@ abstract class Student {
         grades.add(grade);
     }
 
+    public String getType() {
+        return type;
+    }
+
     public double getAverage() {
-        if (grades.isEmpty()) return 0;
-        double sum = 0;
-        for (int grade : grades) {
-            sum += grade;
+        if (!grades.isEmpty()) {
+            double sum = 0;
+            for (int grade : grades) {
+                sum += grade;
+            }
+            return sum / grades.size();
+        } else {
+            return storedAverage; 
         }
-        return sum / grades.size();
+    }
+
+    public void setAverage(double average) {
+        this.storedAverage = average;
     }
 
     public abstract String getSkill();
